@@ -71,7 +71,7 @@ public class NodeController {
     }
 
     private void reportMonitors(LinkedList<Monitor> monitors){
-        monitors.forEach(monitor -> log.info(monitor.getStatus().getFirst().toString()));
+        monitors.forEach(monitor -> log.info(monitor.toString()));
     }
 
     private LinkedList<Monitor> getMonitorList(){
