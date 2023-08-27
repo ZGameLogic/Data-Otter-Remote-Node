@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@Import(NodeController.class)
+@Import({NodeController.class})
 @Slf4j
 @EnableScheduling
 public class App {
