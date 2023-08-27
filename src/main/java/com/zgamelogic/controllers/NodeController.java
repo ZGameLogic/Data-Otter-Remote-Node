@@ -71,8 +71,10 @@ public class NodeController {
     }
 
     private void reportMonitors(LinkedList<Monitor> monitors){
-        monitors.forEach(monitor -> log.info(monitor.toString()));
+//        monitors.forEach(monitor -> log.info(monitor.toString()));
+        log.info("test to see if im cracked");
     }
+
 
     private LinkedList<Monitor> getMonitorList(){
         String url = BASE_URL + "/monitors";
