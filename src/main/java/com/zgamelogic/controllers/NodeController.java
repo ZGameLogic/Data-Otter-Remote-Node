@@ -72,7 +72,7 @@ public class NodeController {
 
     private void reportMonitors(LinkedList<Monitor> monitors){
 //        monitors.forEach(monitor -> log.info(monitor.toString()));
-        log.info("This is another test");
+        log.info("This is a third test");
     }
 
 
