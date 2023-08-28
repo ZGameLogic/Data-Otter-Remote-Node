@@ -20,7 +20,7 @@ public class Monitor {
     private LinkedList<Status> status;
 
     public void addStatus(Status status){
-        if(this.status == null) this.status = new LinkedList<>();
+        this.status = new LinkedList<>();
         this.status.add(status);
     }
 
