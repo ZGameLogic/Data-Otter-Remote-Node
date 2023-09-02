@@ -6,12 +6,14 @@ import com.zgamelogic.data.monitors.APIMonitor;
 import com.zgamelogic.data.monitors.MinecraftMonitor;
 import com.zgamelogic.data.monitors.Monitor;
 import com.zgamelogic.data.monitors.WebMonitor;
+import com.zgamelogic.data.nodes.Node;
 import com.zgamelogic.helpers.APIInterfacer;
 import com.zgamelogic.helpers.MCInterfacer;
 import com.zgamelogic.helpers.WebInterfacer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
@@ -34,8 +36,12 @@ public class NodeController {
 
     private HashMap<String, Class> classMap;
 
+    private Node node;
+
     @Scheduled(cron = "0 */1 * * * *")
     private void oneMinuteTasks(){
+        if(node == null) registerNode();
+        if(node == null) return;
         LinkedList<Thread> threads = new LinkedList<>();
         LinkedList<Monitor> monitors = getMonitorList();
         monitors.forEach(monitor -> {
@@ -54,6 +60,7 @@ public class NodeController {
         classMap.put("api", APIMonitor.class);
         classMap.put("minecraft", MinecraftMonitor.class);
         classMap.put("web", WebMonitor.class);
+        registerNode();
     }
 
     private void runMonitorPing(Monitor monitor){
@@ -73,6 +80,24 @@ public class NodeController {
     private void reportMonitors(LinkedList<Monitor> monitors){
 //        monitors.forEach(monitor -> log.info(monitor.toString()));
         log.info("This is a eleventh test");
+    }
+
+    private void registerNode(){
+        String url = BASE_URL + "/node/register";
+        CloseableHttpClient httpclient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+        try {
+            CloseableHttpResponse httpresponse = httpclient.execute(httpPost);
+            if (httpresponse.getStatusLine().getStatusCode() == 200) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(httpresponse.getEntity().getContent()));
+                ObjectMapper om = new ObjectMapper();
+                node = om.readValue(in.readLine(), Node.class);
+            } else {
+                log.error("Error when registering node: " + httpresponse.getStatusLine().getStatusCode());
+            }
+        } catch (IOException e) {
+            log.error("Error when registering node", e);
+        }
     }
 
 

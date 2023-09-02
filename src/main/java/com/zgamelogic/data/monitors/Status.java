@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.Objects;
 
 @Getter
@@ -20,9 +22,17 @@ public class Status {
     private boolean status;
     private long completedInMilliseconds;
 
+    @Setter
+    private LinkedList<String> nodes;
+
     public void setup(){
         taken = new Date();
         completedInMilliseconds = System.currentTimeMillis();
+    }
+
+    public void addNode(String node){
+        if(nodes == null) nodes = new LinkedList<>();
+        nodes.add(node);
     }
 
     public void setStatus(boolean status){
