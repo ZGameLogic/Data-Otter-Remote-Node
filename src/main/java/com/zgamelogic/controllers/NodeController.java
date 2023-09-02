@@ -1,7 +1,9 @@
 package com.zgamelogic.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.zgamelogic.data.monitors.APIMonitor;
 import com.zgamelogic.data.monitors.MinecraftMonitor;
 import com.zgamelogic.data.monitors.Monitor;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
@@ -61,6 +64,7 @@ public class NodeController {
         classMap.put("minecraft", MinecraftMonitor.class);
         classMap.put("web", WebMonitor.class);
         registerNode();
+        log.info("Node: " + node);
     }
 
     private void runMonitorPing(Monitor monitor){
@@ -83,6 +87,8 @@ public class NodeController {
     }
 
     private void registerNode(){
+        loadConfig();
+        if(node != null) return;
         String url = BASE_URL + "/node/register";
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
@@ -92,6 +98,7 @@ public class NodeController {
                 BufferedReader in = new BufferedReader(new InputStreamReader(httpresponse.getEntity().getContent()));
                 ObjectMapper om = new ObjectMapper();
                 node = om.readValue(in.readLine(), Node.class);
+                saveConfig();
             } else {
                 log.error("Error when registering node: " + httpresponse.getStatusLine().getStatusCode());
             }
@@ -100,6 +107,22 @@ public class NodeController {
         }
     }
 
+
+    private void loadConfig(){
+        File nodeFile = new File("node.json");
+        if(!nodeFile.exists()) return;
+        ObjectMapper om = new ObjectMapper();
+        try {
+            node = om.readValue(nodeFile, Node.class);
+        } catch (IOException ignored) {}
+    }
+
+    private void saveConfig(){
+        ObjectWriter ow = new ObjectMapper().writer(new DefaultPrettyPrinter());
+        try {
+            ow.writeValue(new File("node.json"), node);
+        } catch (IOException ignored) {}
+    }
 
     private LinkedList<Monitor> getMonitorList(){
         String url = BASE_URL + "/monitors";
