@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.zgamelogic.data.monitors.APIMonitor;
-import com.zgamelogic.data.monitors.MinecraftMonitor;
-import com.zgamelogic.data.monitors.Monitor;
-import com.zgamelogic.data.monitors.WebMonitor;
+import com.zgamelogic.data.monitors.*;
 import com.zgamelogic.data.nodes.Node;
 import com.zgamelogic.helpers.APIInterfacer;
 import com.zgamelogic.helpers.MCInterfacer;
@@ -16,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
@@ -24,10 +22,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -68,22 +63,43 @@ public class NodeController {
     }
 
     private void runMonitorPing(Monitor monitor){
+        Status status = null;
         switch(monitor.getType()){
             case "minecraft":
-                monitor.addStatus(MCInterfacer.pingServer((MinecraftMonitor) monitor));
+                status = MCInterfacer.pingServer((MinecraftMonitor) monitor);
                 break;
             case "api":
-                monitor.addStatus(APIInterfacer.pingAPI((APIMonitor) monitor));
+                status = APIInterfacer.pingAPI((APIMonitor) monitor);
                 break;
             case "web":
-                monitor.addStatus(WebInterfacer.pingWeb((WebMonitor) monitor));
+                status = WebInterfacer.pingWeb((WebMonitor) monitor);
                 break;
         }
+        status.addNode(node.getId());
+        monitor.addStatus(status);
     }
 
     private void reportMonitors(LinkedList<Monitor> monitors){
-//        monitors.forEach(monitor -> log.info(monitor.toString()));
-        log.info("This is a eleventh test");
+        String url = BASE_URL + "/node/report";
+
+        ObjectWriter ow = new ObjectMapper().writer(new DefaultPrettyPrinter());
+        try {
+            CloseableHttpClient httpclient = HttpClients.createDefault();
+            HttpPost httpPost = new HttpPost(url);
+            httpPost.setEntity(new StringEntity(
+                    ow.writeValueAsString(monitors)
+            ));
+            try {
+                CloseableHttpResponse httpresponse = httpclient.execute(httpPost);
+                if (httpresponse.getStatusLine().getStatusCode() != 200)  {
+                    log.error("Error when report : " + httpresponse.getStatusLine().getStatusCode());
+                }
+            } catch (IOException e) {
+                log.error("Error when reporting", e);
+            }
+        } catch (JsonProcessingException | UnsupportedEncodingException e) {
+            log.error("Error when reporting", e);
+        }
     }
 
     private void registerNode(){
